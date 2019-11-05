@@ -2,7 +2,6 @@ package org.glowroot.instrumentation.ejb;
 
 import org.glowroot.instrumentation.api.Descriptor;
 import org.glowroot.instrumentation.api.Descriptor.CaptureKind;
-import org.glowroot.instrumentation.api.OptionalThreadContext.AlreadyInTransactionBehavior;
 
 @Descriptor(
             id = "ejb",
