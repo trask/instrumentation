@@ -37,7 +37,7 @@ import org.glowroot.instrumentation.api.weaving.Mixin;
 import org.glowroot.instrumentation.api.weaving.Shim;
 import org.glowroot.instrumentation.netty.boot.Util;
 
-public class Netty4xInstrumentation {
+public class NettyInstrumentation {
 
     private static final TimerName TIMER_NAME = Agent.getTimerName("http request");
 

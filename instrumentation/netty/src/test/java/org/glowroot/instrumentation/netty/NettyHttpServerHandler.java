@@ -34,7 +34,7 @@ import io.netty.util.concurrent.GenericFutureListener;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
-public class Netty4xHttpServerHandler extends ChannelInboundHandlerAdapter {
+public class NettyHttpServerHandler extends ChannelInboundHandlerAdapter {
 
     private static final byte[] CONTENT = {'H', 'e', 'l', 'l', 'o', ' ', 'W', 'o', 'r', 'l', 'd'};
 

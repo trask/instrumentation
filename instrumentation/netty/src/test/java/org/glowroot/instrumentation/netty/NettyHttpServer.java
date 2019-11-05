@@ -28,12 +28,12 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 
-class Netty4xHttpServer {
+class NettyHttpServer {
 
     private final EventLoopGroup group;
     private final Channel channel;
 
-    Netty4xHttpServer(int port) throws InterruptedException {
+    NettyHttpServer(int port) throws InterruptedException {
         group = new NioEventLoopGroup();
         ServerBootstrap b = new ServerBootstrap();
         b.group(group)
@@ -55,7 +55,7 @@ class Netty4xHttpServer {
             ChannelPipeline p = ch.pipeline();
             p.addLast(new HttpServerCodec());
             p.addLast(new ChunkedWriteHandler());
-            p.addLast(new Netty4xHttpServerHandler());
+            p.addLast(new NettyHttpServerHandler());
         }
     }
 }

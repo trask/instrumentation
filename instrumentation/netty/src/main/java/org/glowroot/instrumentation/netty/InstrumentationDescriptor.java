@@ -6,8 +6,7 @@ import org.glowroot.instrumentation.api.Descriptor;
             id = "netty",
             name = "Netty",
             classes = {
-                    Netty3xInstrumentation.class,
-                    Netty4xInstrumentation.class
+                    NettyInstrumentation.class
             },
             collocate = true)
 public class InstrumentationDescriptor {}

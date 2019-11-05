@@ -35,7 +35,7 @@ import org.glowroot.instrumentation.test.harness.util.Ports;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class Netty3xIT {
+public class NettyIT {
 
     private static Container container;
 
@@ -58,7 +58,6 @@ public class Netty3xIT {
     public void shouldCaptureHttpGet() throws Exception {
         // when
         IncomingSpan incomingSpan = container.execute(ExecuteHttpGet.class);
-
         // then
         assertThat(incomingSpan.transactionName()).isEqualTo("/abc");
         assertThat(incomingSpan.message()).isEqualTo("GET /abc?xyz=123");
@@ -71,10 +70,24 @@ public class Netty3xIT {
     }
 
     @Test
+    public void shouldCaptureHttpChunkedResponse() throws Exception {
+        // when
+        IncomingSpan incomingSpan = container.execute(ExecuteHttpChunked.class);
+        // then
+        assertThat(incomingSpan.transactionName()).isEqualTo("/chunked");
+        assertThat(incomingSpan.message()).isEqualTo("GET /chunked");
+        assertThat(incomingSpan.detail().get("Request http method")).isEqualTo("GET");
+        assertThat(incomingSpan.detail().get("Request scheme")).isEqualTo("http");
+        assertThat((String) incomingSpan.detail().get("Request server hostname"))
+                .matches("localhost:[0-9]+");
+        assertThat(incomingSpan.detail().get("Request uri")).isEqualTo("/chunked");
+        assertThat(incomingSpan.childSpans()).isEmpty();
+    }
+
+    @Test
     public void shouldCaptureHttpGetWithException() throws Exception {
         // when
         IncomingSpan incomingSpan = container.execute(ExecuteHttpGetWithException.class);
-
         // then
         assertThat(incomingSpan.transactionName()).isEqualTo("/exception");
         assertThat(incomingSpan.message()).isEqualTo("GET /exception");
@@ -91,9 +104,25 @@ public class Netty3xIT {
         @Override
         public void executeApp(Serializable... args) throws Exception {
             int port = Ports.getAvailable();
-            Netty3xHttpServer server = new Netty3xHttpServer(port);
+            NettyHttpServer server = new NettyHttpServer(port);
             CloseableHttpClient httpClient = HttpClients.createDefault();
             HttpGet httpGet = new HttpGet("http://localhost:" + port + "/abc?xyz=123");
+            int code = httpClient.execute(httpGet).getStatusLine().getStatusCode();
+            if (code != 200) {
+                throw new IllegalStateException("Unexpected response code: " + code);
+            }
+            server.close();
+        }
+    }
+
+    public static class ExecuteHttpChunked implements AppUnderTest {
+
+        @Override
+        public void executeApp(Serializable... args) throws Exception {
+            int port = Ports.getAvailable();
+            NettyHttpServer server = new NettyHttpServer(port);
+            CloseableHttpClient httpClient = HttpClients.createDefault();
+            HttpGet httpGet = new HttpGet("http://localhost:" + port + "/chunked");
             int code = httpClient.execute(httpGet).getStatusLine().getStatusCode();
             if (code != 200) {
                 throw new IllegalStateException("Unexpected response code: " + code);
@@ -107,7 +136,7 @@ public class Netty3xIT {
         @Override
         public void executeApp(Serializable... args) throws Exception {
             int port = Ports.getAvailable();
-            Netty3xHttpServer server = new Netty3xHttpServer(port);
+            NettyHttpServer server = new NettyHttpServer(port);
             CloseableHttpClient httpClient = HttpClientBuilder.create()
                     .disableAutomaticRetries()
                     .build();

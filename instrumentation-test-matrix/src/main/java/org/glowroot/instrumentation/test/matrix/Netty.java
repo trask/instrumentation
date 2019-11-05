@@ -32,68 +32,40 @@ public class Netty {
     }
 
     static void runShort() throws Exception {
-        runNetty3x("3.3.0.Final");
-        runNetty4x("4.0.0.Final");
-        runNettyHttp2("4.1.0.Final");
+        run("4.0.0.Final");
+        runHttp2("4.1.0.Final");
     }
 
     static void runAll() throws Exception {
-        runNetty3x("3.3.0.Final");
-        runNetty3x("3.3.1.Final");
-        for (int i = 0; i <= 6; i++) {
-            runNetty3x("3.4." + i + ".Final");
-        }
-        for (int i = 0; i <= 13; i++) {
-            runNetty3x("3.5." + i + ".Final");
-        }
-        for (int i = 0; i <= 10; i++) {
-            runNetty3x("3.6." + i + ".Final");
-        }
-        runNetty3x("3.7.0.Final");
-        runNetty3x("3.7.1.Final");
-        for (int i = 0; i <= 3; i++) {
-            runNetty3x("3.8." + i + ".Final");
-        }
-        for (int i = 0; i <= 9; i++) {
-            runNetty3x("3.9." + i + ".Final");
-        }
-        for (int i = 0; i <= 6; i++) {
-            runNetty3x("3.10." + i + ".Final");
-        }
         for (int i = 0; i <= 56; i++) {
-            runNetty4x("4.0." + i + ".Final");
+            run("4.0." + i + ".Final");
         }
         for (int i = 1; i <= 7; i++) {
-            runNetty4x("4.1.0.CR" + i);
+            run("4.1.0.CR" + i);
         }
         for (int i = 0; i <= 32; i++) {
             if (i == 28) {
                 // Netty 4.1.28 fails on Java 6, see https://github.com/netty/netty/issues/8166
-                runNetty4xJava7("4.1." + i + ".Final");
+                runJava7("4.1." + i + ".Final");
             } else {
-                runNetty4x("4.1." + i + ".Final");
+                run("4.1." + i + ".Final");
             }
-            runNettyHttp2("4.1." + i + ".Final");
+            runHttp2("4.1." + i + ".Final");
         }
     }
 
-    private static void runNetty3x(String version) throws Exception {
-        Util.updateLibVersion(MODULE_PATH, "netty3x.version", version);
-        Util.runTest(MODULE_PATH, "Netty3xIT", JAVA8, JAVA7, JAVA6);
+    private static void run(String version) throws Exception {
+        Util.updateLibVersion(MODULE_PATH, "netty.version", version);
+        Util.runTest(MODULE_PATH, "NettyIT", JAVA8, JAVA7, JAVA6);
     }
 
-    private static void runNetty4x(String version) throws Exception {
-        Util.updateLibVersion(MODULE_PATH, "netty4x.version", version);
-        Util.runTest(MODULE_PATH, "Netty4xIT", JAVA8, JAVA7, JAVA6);
+    private static void runJava7(String version) throws Exception {
+        Util.updateLibVersion(MODULE_PATH, "netty.version", version);
+        Util.runTest(MODULE_PATH, "NettyIT", JAVA8, JAVA7);
     }
 
-    private static void runNetty4xJava7(String version) throws Exception {
-        Util.updateLibVersion(MODULE_PATH, "netty4x.version", version);
-        Util.runTest(MODULE_PATH, "Netty4xIT", JAVA8, JAVA7);
-    }
-
-    private static void runNettyHttp2(String version) throws Exception {
-        Util.updateLibVersion(MODULE_PATH, "netty4x.version", version);
-        Util.runTest(MODULE_PATH, "Netty4xIT", "netty-http2", JAVA8, JAVA7);
+    private static void runHttp2(String version) throws Exception {
+        Util.updateLibVersion(MODULE_PATH, "netty.version", version);
+        Util.runTest(MODULE_PATH, "NettyIT", "netty-http2", JAVA8, JAVA7);
     }
 }

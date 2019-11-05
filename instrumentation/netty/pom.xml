@@ -25,8 +25,7 @@
   </licenses>
 
   <properties>
-    <netty4x.version>4.1.35.Final</netty4x.version>
-    <netty3x.version>3.10.6.Final</netty3x.version>
+    <netty.version>4.1.35.Final</netty.version>
   </properties>
 
   <dependencies>
@@ -39,7 +38,7 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-all</artifactId>
-      <version>${netty4x.version}</version>
+      <version>${netty.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -61,12 +60,6 @@
       <groupId>org.glowroot.instrumentation</groupId>
       <artifactId>instrumentation-test-harness</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty</artifactId>
-      <version>${netty3x.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
