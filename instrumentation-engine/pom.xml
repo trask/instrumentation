@@ -24,7 +24,7 @@
   </licenses>
 
   <properties>
-    <asm.version>7.0</asm.version>
+    <asm.version>7.2</asm.version>
   </properties>
 
   <dependencies>

@@ -15,7 +15,10 @@ then
   # MaxPermSize bump is needed for running grails instrumentation tests
   surefire_jvm_args="$surefire_jvm_args -XX:MaxPermSize=128m"
 fi
-
+if [[ $java_version == 13* ]]
+then
+  echo "MAVEN_OPTS=\"-Xmx768m -XX:NewRatio=20 -Dmaven.compiler.source=1.7 -Dmaven.compiler.target=1.7\"" > ~/.mavenrc
+fi
 
 case "$1" in
 

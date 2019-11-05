@@ -516,6 +516,7 @@ class PreInitializeWeavingClasses {
         types.add("org.objectweb.asm.commons.ClassRemapper");
         types.add("org.objectweb.asm.commons.FieldRemapper");
         types.add("org.objectweb.asm.commons.GeneratorAdapter");
+        types.add("org.objectweb.asm.commons.InstructionAdapter");
         types.add("org.objectweb.asm.commons.JSRInlinerAdapter");
         types.add("org.objectweb.asm.commons.JSRInlinerAdapter$Instantiation");
         types.add("org.objectweb.asm.commons.LocalVariablesSorter");
@@ -538,6 +539,7 @@ class PreInitializeWeavingClasses {
         types.add("org.objectweb.asm.tree.IincInsnNode");
         types.add("org.objectweb.asm.tree.InnerClassNode");
         types.add("org.objectweb.asm.tree.InsnList");
+        types.add("org.objectweb.asm.tree.InsnList$InsnListIterator");
         types.add("org.objectweb.asm.tree.InsnNode");
         types.add("org.objectweb.asm.tree.IntInsnNode");
         types.add("org.objectweb.asm.tree.InvokeDynamicInsnNode");

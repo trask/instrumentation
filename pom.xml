@@ -95,6 +95,8 @@
       not visible to ps -->
     <sonar.login>${env.SONAR_LOGIN}</sonar.login>
     <build.commit>[none]</build.commit>
+    <maven.compiler.source>1.6</maven.compiler.source>
+    <maven.compiler.target>1.6</maven.compiler.target>
   </properties>
 
   <dependencyManagement>
@@ -276,8 +278,6 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.0</version>
           <configuration>
-            <source>1.6</source>
-            <target>1.6</target>
             <!-- prevents endPosTable exception for maven compile due to annotation processing,
               see http://immutables.github.io/getstarted.html -->
             <useIncrementalCompilation>false</useIncrementalCompilation>
