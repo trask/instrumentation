@@ -66,6 +66,7 @@ public class NettyIT {
         assertThat((String) incomingSpan.detail().get("Request server hostname"))
                 .matches("localhost:[0-9]+");
         assertThat(incomingSpan.detail().get("Request uri")).isEqualTo("/abc?xyz=123");
+        assertThat(incomingSpan.detail().get("Response code")).isEqualTo(200);
         assertThat(incomingSpan.childSpans()).isEmpty();
     }
 
@@ -81,6 +82,7 @@ public class NettyIT {
         assertThat((String) incomingSpan.detail().get("Request server hostname"))
                 .matches("localhost:[0-9]+");
         assertThat(incomingSpan.detail().get("Request uri")).isEqualTo("/chunked");
+        assertThat(incomingSpan.detail().get("Response code")).isEqualTo(200);
         assertThat(incomingSpan.childSpans()).isEmpty();
     }
 

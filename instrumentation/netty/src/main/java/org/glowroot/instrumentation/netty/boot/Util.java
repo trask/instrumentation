@@ -36,7 +36,7 @@ public class Util {
         return span;
     }
 
-    private static String getPath(@Nullable String uri) {
+    public static String getPath(@Nullable String uri) {
         String path;
         if (uri == null) {
             path = "";

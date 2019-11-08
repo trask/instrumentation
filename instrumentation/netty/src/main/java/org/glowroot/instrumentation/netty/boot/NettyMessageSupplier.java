@@ -22,19 +22,25 @@ import org.glowroot.instrumentation.api.Message;
 import org.glowroot.instrumentation.api.MessageSupplier;
 import org.glowroot.instrumentation.api.checker.Nullable;
 
-class NettyMessageSupplier extends MessageSupplier {
+public class NettyMessageSupplier extends MessageSupplier {
 
     private final @Nullable String requestMethod;
     private final boolean ssl;
     private final @Nullable String host;
     private final @Nullable String uri;
 
-    NettyMessageSupplier(@Nullable String requestMethod, boolean ssl, @Nullable String host,
+    private volatile int responseCode;
+
+    public NettyMessageSupplier(@Nullable String requestMethod, boolean ssl, @Nullable String host,
             @Nullable String uri) {
         this.requestMethod = requestMethod;
         this.ssl = ssl;
         this.host = host;
         this.uri = uri;
+    }
+
+    public void setResponseCode(int responseCode) {
+        this.responseCode = responseCode;
     }
 
     @Override
@@ -58,6 +64,9 @@ class NettyMessageSupplier extends MessageSupplier {
             detail.put("Request server hostname", host);
         }
         detail.put("Request scheme", ssl ? "https" : "http");
+        if (responseCode != 0) {
+            detail.put("Response code", responseCode);
+        }
         return Message.create(message, detail);
     }
 }

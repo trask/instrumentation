@@ -20,6 +20,7 @@ import java.net.SocketAddress;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.HttpResponse;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 
@@ -27,6 +28,7 @@ import org.glowroot.instrumentation.api.Agent;
 import org.glowroot.instrumentation.api.AuxThreadContext;
 import org.glowroot.instrumentation.api.Getter;
 import org.glowroot.instrumentation.api.OptionalThreadContext;
+import org.glowroot.instrumentation.api.OptionalThreadContext.AlreadyInTransactionBehavior;
 import org.glowroot.instrumentation.api.Span;
 import org.glowroot.instrumentation.api.ThreadContext;
 import org.glowroot.instrumentation.api.TimerName;
@@ -35,6 +37,7 @@ import org.glowroot.instrumentation.api.weaving.Advice;
 import org.glowroot.instrumentation.api.weaving.Bind;
 import org.glowroot.instrumentation.api.weaving.Mixin;
 import org.glowroot.instrumentation.api.weaving.Shim;
+import org.glowroot.instrumentation.netty.boot.NettyMessageSupplier;
 import org.glowroot.instrumentation.netty.boot.Util;
 
 public class NettyInstrumentation {
@@ -47,9 +50,21 @@ public class NettyInstrumentation {
     @Mixin("io.netty.channel.Channel")
     public abstract static class ChannelImpl implements ChannelMixin {
 
+        private transient volatile @Nullable NettyMessageSupplier glowroot$messageSupplierToComplete;
         private transient volatile @Nullable ThreadContext glowroot$threadContextToComplete;
         private transient volatile @Nullable AuxThreadContext glowroot$auxContext;
         private transient boolean ssl;
+
+        @Override
+        public @Nullable NettyMessageSupplier glowroot$getMessageSupplierToComplete() {
+            return glowroot$messageSupplierToComplete;
+        }
+
+        @Override
+        public void glowroot$setMessageSupplierToComplete(
+                @Nullable NettyMessageSupplier glowroot$messageSupplierToComplete) {
+            this.glowroot$messageSupplierToComplete = glowroot$messageSupplierToComplete;
+        }
 
         @Override
         public @Nullable ThreadContext glowroot$getThreadContextToComplete() {
@@ -87,14 +102,19 @@ public class NettyInstrumentation {
     public interface ChannelMixin {
 
         @Nullable
+        NettyMessageSupplier glowroot$getMessageSupplierToComplete();
+
+        void glowroot$setMessageSupplierToComplete(@Nullable NettyMessageSupplier messageSupplier);
+
+        @Nullable
         ThreadContext glowroot$getThreadContextToComplete();
 
-        void glowroot$setThreadContextToComplete(@Nullable ThreadContext completeAsyncTransaction);
+        void glowroot$setThreadContextToComplete(@Nullable ThreadContext context);
 
         @Nullable
         AuxThreadContext glowroot$getAuxContext();
 
-        void glowroot$setAuxContext(@Nullable AuxThreadContext auxThreadContext);
+        void glowroot$setAuxContext(@Nullable AuxThreadContext auxContext);
 
         boolean glowroot$isSsl();
 
@@ -197,9 +217,14 @@ public class NettyInstrumentation {
                     host = inetSocketAddress.getHostName() + ":" + inetSocketAddress.getPort();
                 }
             }
-            Span span = Util.startAsyncTransaction(context, requestMethod,
-                    channelMixin.glowroot$isSsl(), host, request.getUri(), GETTER, request,
-                    TIMER_NAME);
+            String uri = request.getUri();
+            NettyMessageSupplier messageSupplier = new NettyMessageSupplier(requestMethod,
+                    channelMixin.glowroot$isSsl(), host, uri);
+            Span span = context.startIncomingSpan("Web", Util.getPath(uri), GETTER, request,
+                    messageSupplier, TIMER_NAME,
+                    AlreadyInTransactionBehavior.CAPTURE_LOCAL_SPAN);
+            context.setTransactionAsync();
+            channelMixin.glowroot$setMessageSupplierToComplete(messageSupplier);
             channelMixin.glowroot$setThreadContextToComplete(context);
             // IMPORTANT the close future gets called if client disconnects, but does not get called
             // when transaction ends and Keep-Alive is used (so still need to capture write
@@ -207,7 +232,10 @@ public class NettyInstrumentation {
             channel.closeFuture().addListener(new GenericFutureListener<Future<? super Void>>() {
                 @Override
                 public void operationComplete(Future<? super Void> future) {
-                    endTransaction(channelMixin);
+                    ThreadContext context = channelMixin.glowroot$getThreadContextToComplete();
+                    if (context != null) {
+                        endTransaction(channelMixin, context);
+                    }
                 }
             });
             if (!(msg instanceof LastHttpContentShim)) {
@@ -289,9 +317,6 @@ public class NettyInstrumentation {
                 @Bind.Argument(0) @Nullable ChannelHandlerContext channelHandlerContext,
                 @Bind.Argument(1) @Nullable Object msg) {
 
-            if (!(msg instanceof LastHttpContentShim)) {
-                return;
-            }
             if (channelHandlerContext == null) {
                 return;
             }
@@ -299,18 +324,30 @@ public class NettyInstrumentation {
             if (channel == null) {
                 return;
             }
-            endTransaction((ChannelMixin) channel);
+            ChannelMixin channelMixin = (ChannelMixin) channel;
+            if (msg instanceof HttpResponse) {
+                NettyMessageSupplier messageSupplier =
+                        channelMixin.glowroot$getMessageSupplierToComplete();
+                if (messageSupplier != null) {
+                    messageSupplier.setResponseCode(((HttpResponse) msg).getStatus().code());
+                }
+            }
+            ThreadContext context = channelMixin.glowroot$getThreadContextToComplete();
+            if (context == null) {
+                return;
+            }
+            if (!(msg instanceof LastHttpContentShim)) {
+                return;
+            }
+            endTransaction((ChannelMixin) channel, context);
         }
     }
 
-    private static void endTransaction(ChannelMixin channelMixin) {
-
-        ThreadContext context = channelMixin.glowroot$getThreadContextToComplete();
-        if (context != null) {
-            context.setTransactionAsyncComplete();
-            channelMixin.glowroot$setThreadContextToComplete(null);
-            channelMixin.glowroot$setAuxContext(null);
-        }
+    private static void endTransaction(ChannelMixin channelMixin, ThreadContext context) {
+        context.setTransactionAsyncComplete();
+        channelMixin.glowroot$setMessageSupplierToComplete(null);
+        channelMixin.glowroot$setThreadContextToComplete(null);
+        channelMixin.glowroot$setAuxContext(null);
     }
 
     private static class GetterImpl implements Getter<HttpRequestShim> {
